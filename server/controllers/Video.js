@@ -133,6 +133,8 @@ const getPlayer = async (req, res) => {
       return res.status(404).json({ error: 'Video not found!' });
     }
 
+    console.log("Video Found!");
+
   fs.stat(docs, (err, stats) => {
     if (err) {
       if (err.code === 'ENOENT') {
