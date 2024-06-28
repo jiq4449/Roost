@@ -1,5 +1,6 @@
 const models = require('../models');
 const File = require('../models/Filestore');
+const fs = require('fs');
 
 const { Video } = models;
 
@@ -91,31 +92,93 @@ const getVideo = async (req, res) => {
 const getVideoPage = async (req, res) => res.render('viewer');
 
 // Gets specific video information.
-const getPlayer = async (req, res) => {
-  if (!req.query._id) {
-    return res.status(400).json({ error: 'Missing file id!' });
-  }
+// const getPlayer = async (req, res) => {
+//   if (!req.query._id) {
+//     return res.status(400).json({ error: 'Missing file id!' });
+//   }
 
+//   let docs;
+
+//   try {
+//     docs = await Video.findOne({ _id: req.query._id }).exec();
+//   } catch (err) {
+//     console.log(err);
+//     return res.status(500).json({ error: 'Error retrieving video!' });
+//   }
+
+//   if (!docs) {
+//     return res.status(404).json({ error: 'Video not found!' });
+//   }
+
+//   res.set({
+//     'Content-Type': docs.mimetype,
+//     'Content-Length': docs.size,
+//     'Content-Disposition': `filename="${docs.title}`,
+//   });
+
+//   return res.send(docs.data);
+// };
+
+const getPlayer = async (req, res) => {
   let docs;
 
   try {
     docs = await Video.findOne({ _id: req.query._id }).exec();
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({ error: 'Error retrieving video!' });
-  }
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ error: 'Error retrieving video!' });
+    }
 
-  if (!docs) {
-    return res.status(404).json({ error: 'Video not found!' });
-  }
+    if (!docs) {
+      return res.status(404).json({ error: 'Video not found!' });
+    }
 
-  res.set({
-    'Content-Type': docs.mimetype,
-    'Content-Length': docs.size,
-    'Content-Disposition': `filename="${docs.title}`,
+  fs.stat(docs, (err, stats) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        res.writeHead(404);
+      }
+      return res.end(err);
+    }
+
+    let { range } = req.headers;
+
+    if (!range) {
+      range = 'bytes=0-';
+    }
+
+    const positions = range.replace(/bytes=/, '').split('-');
+
+    let start = parseInt(positions[0], 10);
+
+    const total = stats.size;
+    const end = positions[1] ? parseInt(positions[1], 10) : total - 1;
+
+    if (start > end) {
+      start = end - 1;
+    }
+
+    const chunksize = (end - start) + 1;
+
+    res.writeHead(206, {
+      'Content-Range': `bytes  ${start}-${end}/${total}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': `${req.url.split('.')[1]}`,
+    });
+
+    const stream = fs.createReadStream(file, { start, end });
+
+    stream.on('open', () => {
+      stream.pipe(res);
+    });
+
+    stream.on('error', (streamErr) => {
+      res.end(streamErr);
+    });
+
+    return stream;
   });
-
-  return res.send(docs.data);
 };
 
 module.exports = {
