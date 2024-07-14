@@ -10,6 +10,7 @@
     "start": "node ./server/app.js",
     "pretest": "eslint ./server --fix",
     "test": "echo \"Tests complete\"",
+    "build": "webpack --config webpack.config.js",
     "heroku-postbuild": "webpack"
   },
   "keywords": [
