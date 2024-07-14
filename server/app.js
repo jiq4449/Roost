@@ -14,6 +14,9 @@ const fileUpload = require('express-fileupload');
 
 const router = require('./router.js');
 
+console.log('MONGODB_URI: ' + process.env.MONGODB_URI)
+console.log('MONGODB_URI: ' + process.env.REDISCLOUD_URL)
+
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
 
 const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/Roost';
