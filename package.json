@@ -33,7 +33,6 @@
     "aws-cdk-lib": "^2.148.1",
     "babel-loader": "^9.1.2",
     "constructs": "^10.3.0",
-    "dotenv": "^16.0.3",
     "esbuild": "^0.23.0",
     "eslint": "^8.36.0",
     "eslint-config-airbnb": "^19.0.4",
